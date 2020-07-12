@@ -33,38 +33,35 @@ def calc_mlleaks_cnn_size(size):
     return out
 
 class mlleaks_cnn(nn.Module): 
-    def __init__(self):
+    def __init__(self, n_in=3, n_out=10, n_hidden=64, size=32): 
         super(mlleaks_cnn, self).__init__()
-
         
-        self.layer1 = nn.Sequential(
-            nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3, padding=1),
-            nn.BatchNorm2d(32),
+        self.n_hidden = n_hidden 
+        
+        self.conv_block_1 = nn.Sequential(
+            nn.Conv2d(n_in, n_hidden, kernel_size=5, stride=1, padding=2), 
+            nn.BatchNorm2d(n_hidden), 
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2)
         )
-        
-        self.layer2 = nn.Sequential(
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3),
-            nn.BatchNorm2d(64),
+        self.conv_block_2 = nn.Sequential(
+            nn.Conv2d(n_hidden, 2*n_hidden, kernel_size=5, stride=1, padding=2), 
+            nn.BatchNorm2d(2*n_hidden), 
             nn.ReLU(),
-            nn.MaxPool2d(2)
-        )
-        
-        self.fc1 = nn.Linear(in_features=64*6*6, out_features=600)
-        self.drop = nn.Dropout2d(0.25)
-        self.fc2 = nn.Linear(in_features=600, out_features=120)
-        self.fc3 = nn.Linear(in_features=120, out_features=10)
-      
+            nn.MaxPool2d(kernel_size=2, stride=2)
+        ) 
 
-    def forward(self, x):
-        out = self.layer1(x)
-        out = self.layer2(out)
-        out = out.view(out.size(0), -1)
-        out = self.fc1(out)
-        out = self.drop(out)
-        out = self.fc2(out)
-        out = self.fc3(out)
+        fc_feature_size = calc_mlleaks_cnn_size(size)
+        self.fc = nn.Linear(int(2*n_hidden * fc_feature_size * fc_feature_size), 128)
+        self.output = nn.Linear(2*n_hidden, n_out)
+        
+    def forward(self, x): 
+        x = self.conv_block_1(x)
+        x = self.conv_block_2(x)
+        x = x.view(x.size(0), -1)
+        x = self.fc(x)
+        out = self.output(x)
+        
         return out
 
 class mlleaks_mlp(nn.Module): 

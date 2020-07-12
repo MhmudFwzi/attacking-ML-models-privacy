@@ -7,9 +7,9 @@ import torch.nn as nn
 import torch.optim as optim
 
 
-lr = 0.01
+lr = 0.001
 batch_size = 64
-k=1
+k=3
 n_epochs = 2
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
